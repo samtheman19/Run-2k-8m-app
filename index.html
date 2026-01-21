@@ -1,58 +1,194 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>2km Sub-8 Training</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#0b0b0f" />
+  <title>2 km 8:10 – Treadmill Routine</title>
+
+  <link rel="manifest" href="manifest.json" />
+
+  <style>
+    :root{
+      --bg:#0b0b0f;
+      --card:#15151c;
+      --card2:#101017;
+      --muted:#9aa0a6;
+      --text:#ffffff;
+      --accent:#6fd3ff;
+      --line:rgba(255,255,255,.08);
+      --pill:rgba(255,255,255,.06);
+    }
+    *{box-sizing:border-box;}
+    html,body{margin:0;padding:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Inter,Arial,sans-serif;overflow-x:hidden;}
+    a{color:var(--accent);}
+    .app{max-width:460px;margin:0 auto;padding:18px 14px 34px;}
+    h1{margin:4px 0 14px;font-size:28px;letter-spacing:-.3px;}
+    .sub{margin:-8px 0 14px;color:var(--muted);font-size:13px;line-height:1.35;}
+    .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;}
+    .spacer{flex:1;}
+    .btn{border:0;background:var(--pill);color:var(--text);padding:10px 14px;border-radius:14px;font-weight:600;cursor:pointer;}
+    .btnPrimary{background:var(--accent);color:#081018;}
+    .btnSmall{padding:9px 12px;border-radius:12px;font-weight:700;}
+    .chip{background:var(--pill);padding:10px 12px;border-radius:14px;color:var(--text);display:flex;align-items:center;gap:8px;}
+    select,input{background:var(--card2);border:1px solid var(--line);color:var(--text);border-radius:14px;padding:10px 12px;font-size:14px;max-width:100%;}
+    .card{background:linear-gradient(180deg,rgba(255,255,255,.05),rgba(255,255,255,.02));border:1px solid var(--line);border-radius:22px;padding:16px;margin:14px 0;}
+    .cardTitle{font-size:18px;font-weight:800;margin:0 0 6px;}
+    .muted{color:var(--muted);}
+    .hr{height:1px;background:var(--line);margin:14px 0;}
+    .bigTime{font-size:52px;font-weight:900;letter-spacing:1px;line-height:1;margin:8px 0 10px;}
+    .tiny{font-size:12px;color:var(--muted);}
+
+    /* Exercise layout */
+    .dayTitle{font-size:22px;font-weight:900;margin:0 0 10px;}
+    .exTitle{font-size:22px;font-weight:900;margin:6px 0 6px;}
+    .exMeta{color:var(--muted);font-size:13px;margin:0 0 10px;}
+    .tableHead{display:grid;grid-template-columns:38px minmax(0,1fr) minmax(0,1fr) minmax(0,1fr) minmax(0,1fr) 40px 44px;gap:8px;align-items:center;color:var(--muted);font-size:12px;font-weight:700;margin:8px 0 6px;}
+    .setRow{display:grid;grid-template-columns:38px minmax(0,1fr) minmax(0,1fr) minmax(0,1fr) minmax(0,1fr) 40px 44px;gap:8px;align-items:center;margin:8px 0;}
+    .setRow > *{min-width:0;}
+    .setNum{color:var(--text);font-weight:800;}
+    .pillInput{
+      width:100%;
+      height:38px;
+      padding:8px 10px;
+      border-radius:14px;
+      border:1px solid var(--line);
+      background:rgba(255,255,255,.04);
+      font-weight:700;
+    }
+    .pillRead{
+      width:100%;
+      height:38px;
+      padding:8px 10px;
+      border-radius:14px;
+      border:1px solid var(--line);
+      background:rgba(255,255,255,.03);
+      color:rgba(255,255,255,.75);
+      font-weight:800;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+    .doneWrap{display:flex;justify-content:center;}
+    .done{width:22px;height:22px;accent-color:var(--accent);}
+
+    /* Small countdown box next to tick */
+    .restBox{
+      width:40px;height:38px;
+      border-radius:12px;
+      border:1px solid var(--line);
+      background:rgba(255,255,255,.03);
+      color:rgba(255,255,255,.85);
+      display:flex;align-items:center;justify-content:center;
+      font-weight:900;
+      font-variant-numeric:tabular-nums;
+    }
+
+    /* Mobility box with ticks + per-item countdown */
+    .mobItem{
+      display:grid;
+      grid-template-columns: 1fr 92px 44px 44px;
+      gap:10px;
+      align-items:center;
+      margin:10px 0;
+    }
+    .mobName{font-weight:800;}
+    .mobTimer{font-variant-numeric:tabular-nums;font-weight:900;text-align:center;}
+    .mobBtn{width:44px;height:38px;border-radius:12px;border:1px solid var(--line);background:rgba(255,255,255,.04);color:#fff;font-weight:900;}
+    .mobDone{display:flex;justify-content:center;}
+    .mobChk{width:22px;height:22px;accent-color:var(--accent);}
+
+    /* Keep it tight on small screens */
+    @media (max-width: 380px){
+      .tableHead,.setRow{grid-template-columns:34px minmax(0,1fr) minmax(0,1fr) minmax(0,1fr) minmax(0,1fr) 36px 44px;}
+      .restBox{width:36px;}
+    }
+  </style>
 </head>
+
 <body>
+  <div class="app">
+    <h1>2 km 8:10 – Treadmill Routine</h1>
+    <div class="sub">
+      Incline 1.0% · Race pace 14.7 km/h · Tick warm-up / main / mobility · Saves on this device
+    </div>
 
-<div class="app-container">
-
-  <!-- Sidebar -->
-  <aside class="sidebar">
-    <h2>2km Sub‑8</h2>
-    <nav>
-      <ul>
-        <li><a href="#" onclick="showSection('calendar')">Calendar</a></li>
-        <li><a href="#" onclick="showSection('timer')">Timer</a></li>
-        <li><a href="#" onclick="showSection('logs')">Logs</a></li>
-      </ul>
-    </nav>
-  </aside>
-
-  <!-- Main content -->
-  <main class="main-content">
-
-    <!-- Calendar section -->
-    <section id="calendar" class="section active">
-      <h1>Weekly Calendar</h1>
-      <div id="calendarContainer"></div>
-    </section>
-
-    <!-- Timer section -->
-    <section id="timer" class="section">
-      <h1>Interval Timer</h1>
-      <div id="timerPanel">
-        <h2 id="timerLabel">Ready</h2>
-        <h1 id="timerTime">00:00</h1>
-        <button onclick="start400s()">Start 400m Intervals</button>
+    <!-- Top controls -->
+    <div class="row">
+      <div class="chip">
+        <span class="muted" style="font-weight:800;">Day</span>
+        <select id="daySelect" aria-label="Select day"></select>
       </div>
-    </section>
 
-    <!-- Logs section -->
-    <section id="logs" class="section">
-      <h1>Recent Logs</h1>
-      <ul id="logList"></ul>
-    </section>
+      <!-- NEW: Mode selector -->
+      <div class="chip">
+        <span class="muted" style="font-weight:800;">Mode</span>
+        <select id="modeSelect" aria-label="Select mode">
+          <option value="treadmill">Treadmill</option>
+          <option value="outdoor">Outdoor</option>
+        </select>
+      </div>
 
-  </main>
+      <button class="btn" id="resetDayBtn">Reset day</button>
+      <div class="spacer"></div>
+      <button class="btn btnPrimary" id="resetWeekBtn">Reset week</button>
+    </div>
 
-</div>
+    <!-- Workout timer -->
+    <div class="card" id="sessionCard">
+      <div class="row">
+        <div>
+          <div class="cardTitle">Workout</div>
+          <div class="muted" id="sessionDate"></div>
+        </div>
+        <div class="spacer"></div>
+        <button class="btn btnPrimary" id="sessionStartBtn">Start</button>
+      </div>
 
-<script src="app.js"></script>
+      <div class="bigTime" id="sessionTime">00:00:00</div>
+
+      <div class="row">
+        <button class="btn" id="sessionPauseBtn">Pause</button>
+        <button class="btn" id="sessionEndBtn">End (save)</button>
+      </div>
+    </div>
+
+    <!-- Main content -->
+    <div class="card" id="dayCard">
+      <div class="dayTitle" id="dayTitle">—</div>
+
+      <details open>
+        <summary>Warm-up</summary>
+        <ul id="warmupList"></ul>
+      </details>
+
+      <div class="hr"></div>
+
+      <div id="mainBlock"></div>
+
+      <div class="hr"></div>
+
+      <!-- Mobility -->
+      <div class="card" style="margin:0; padding:14px;" id="mobilityCard">
+        <div class="cardTitle">Mobility</div>
+        <div class="muted" style="margin-bottom:10px;">Use Start to count down, tick when done.</div>
+        <div id="mobilityList"></div>
+      </div>
+    </div>
+
+    <div class="tiny" style="margin-top:18px;">
+      Install: Safari → Share → Add to Home Screen · Offline works after first load.
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+  <script>
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.register("./sw.js").catch(()=>{});
+    }
+  </script>
 </body>
 </html>
-
-<!-- rebuild -->
