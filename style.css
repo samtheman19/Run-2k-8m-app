@@ -12,7 +12,7 @@ h1 {
 
 #calendar {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(2, 1fr);
   gap: 15px;
   margin-bottom: 40px;
 }
@@ -44,10 +44,12 @@ button:hover {
 #timer {
   margin-top: 30px;
 }
+
 #timer h1 {
   font-size: 48px;
   margin: 10px 0;
 }
+
 #timer h2 {
   font-size: 24px;
 }
