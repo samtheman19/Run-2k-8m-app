@@ -1,4 +1,10 @@
-// -------------------- TRAINING PLAN --------------------
+// ---------------- Sidebar navigation ----------------
+function showSection(id) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+// ---------------- Training Plan ----------------
 const plan = [
   { day: "Day 1", type: "VO2 Intervals" },
   { day: "Day 2", type: "Easy + Strides" },
@@ -9,141 +15,76 @@ const plan = [
 ];
 
 let userData = JSON.parse(localStorage.getItem("trainingData")) || {};
+let logs = JSON.parse(localStorage.getItem("runLogs")) || [];
 
 function renderCalendar() {
-  const calendar = document.getElementById("calendar");
-  calendar.innerHTML = "";
-
-  plan.forEach((p, i) => {
-    const dayEl = document.createElement("div");
-    dayEl.classList.add("day");
-    dayEl.innerHTML = `
+  const container = document.getElementById('calendarContainer');
+  container.innerHTML = '';
+  plan.forEach((p,i) => {
+    const dayCard = document.createElement('div');
+    dayCard.className = 'day-card';
+    dayCard.innerHTML = `
       <div><strong>${p.day}</strong></div>
       <div>${p.type}</div>
-      <div class="checkbox">
-        <input type="checkbox" id="chk${i}" ${userData[i]?.done ? "checked" : ""} onchange="toggleDone(${i})">
+      <div>
+        <input type="checkbox" id="chk${i}" ${userData[i]?.done?'checked':''} onchange="toggleDone(${i})">
+        Done
       </div>
-      <div><button onclick="logSession(${i})">Log Session</button></div>
+      <button onclick="logSession(${i})">Log Session</button>
     `;
-    calendar.appendChild(dayEl);
+    container.appendChild(dayCard);
   });
 }
 
 function toggleDone(i) {
-  userData[i] = userData[i] || {};
-  userData[i].done = document.getElementById("chk" + i).checked;
-  localStorage.setItem("trainingData", JSON.stringify(userData));
+  userData[i] = userData[i]||{};
+  userData[i].done = document.getElementById('chk'+i).checked;
+  localStorage.setItem('trainingData', JSON.stringify(userData));
+}
+
+// ---------------- Logs ----------------
+function renderLogs() {
+  const list = document.getElementById('logList');
+  list.innerHTML = '';
+  logs.slice(-10).reverse().forEach(l => {
+    const li = document.createElement('li');
+    li.textContent = `${l.day} - ${l.type} - Pace: ${l.pace} - Notes: ${l.notes}`;
+    list.appendChild(li);
+  });
 }
 
 function logSession(i) {
   const pace = prompt("Enter your average pace (mm:ss per km):");
-  const notes = prompt("Any notes?");
-  userData[i] = userData[i] || {};
+  const notes = prompt("Notes?");
+  userData[i] = userData[i]||{};
   userData[i].pace = pace;
   userData[i].notes = notes;
-  adjustPlan(i);
-  localStorage.setItem("trainingData", JSON.stringify(userData));
-  alert("Session logged!");
-}
+  userData[i].done = true;
 
-function adjustPlan(i) {
-  let entry = userData[i];
-  if (!entry.pace) return;
-  const [m, s] = entry.pace.split(":").map(Number);
-  const totalSec = m * 60 + s;
-  const targetSec = 240; // 4:00/km goal
-  if (totalSec < targetSec) {
-    alert("Nice! We'll make the sessions slightly faster next week!");
-  } else {
-    alert("Pace targets will remain the same next week.");
-  }
-}
-
-renderCalendar();
-
-// -------------------- AUDIO --------------------
-let audioCtx;
-function initAudio() {
-  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-}
-
-function beep(freq = 800, duration = 0.15) {
-  initAudio();
-  const osc = audioCtx.createOscillator();
-  const gain = audioCtx.createGain();
-  osc.frequency.value = freq;
-  osc.type = "sine";
-  gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
-  gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
-  osc.connect(gain);
-  gain.connect(audioCtx.destination);
-  osc.start();
-  osc.stop(audioCtx.currentTime + duration);
-}
-
-function endBeep() {
-  beep(600, 0.2);
-  setTimeout(() => beep(600, 0.2), 200);
-}
-
-// -------------------- TIMER --------------------
-let timerInterval;
-let currentRep = 0;
-
-function startIntervalTimer({ reps = 6, work = 90, rest = 90 }) {
-  initAudio();
-  currentRep = 1;
-  runWorkPhase(work, rest, reps);
-}
-
-function runWorkPhase(work, rest, reps) {
-  let timeLeft = work;
-  beep(1000, 0.2);
-
-  timerInterval = setInterval(() => {
-    updateTimerDisplay(`Rep ${currentRep} — RUN`, timeLeft);
-    if (timeLeft <= 3 && timeLeft > 0) beep(1200, 0.1);
-    if (timeLeft <= 0) {
-      clearInterval(timerInterval);
-      endBeep();
-      if (currentRep < reps) runRestPhase(work, rest, reps);
-      else updateTimerDisplay("Session Complete", 0);
-    }
-    timeLeft--;
-  }, 1000);
-}
-
-function runRestPhase(work, rest, reps) {
-  let timeLeft = rest;
-  beep(500, 0.2);
-  timerInterval = setInterval(() => {
-    updateTimerDisplay(`Rep ${currentRep} — REST`, timeLeft);
-    if (timeLeft <= 0) {
-      clearInterval(timerInterval);
-      currentRep++;
-      runWorkPhase(work, rest, reps);
-    }
-    timeLeft--;
-  }, 1000);
-}
-
-function updateTimerDisplay(label, seconds) {
-  document.getElementById("timerLabel").innerText = label;
-  document.getElementById("timerTime").innerText =
-    Math.floor(seconds / 60).toString().padStart(2, "0") +
-    ":" +
-    (seconds % 60).toString().padStart(2, "0");
-}
-
-function start400s() {
-  startIntervalTimer({
-    reps: 6,
-    work: getEveningAdjustedWorkTime(90),
-    rest: 90
+  logs.push({
+    day: plan[i].day,
+    type: plan[i].type,
+    pace, notes
   });
+
+  localStorage.setItem('trainingData', JSON.stringify(userData));
+  localStorage.setItem('runLogs', JSON.stringify(logs));
+  renderCalendar();
+  renderLogs();
+  alert('Session logged!');
 }
 
-function getEveningAdjustedWorkTime(baseSeconds) {
-  const hour = new Date().getHours();
-  return hour >= 17 ? baseSeconds + 3 : baseSeconds;
-}
+// ---------------- Timer (same as before) ----------------
+let audioCtx, timerInterval, currentRep=0;
+function initAudio(){if(!audioCtx) audioCtx=new (window.AudioContext||window.webkitAudioContext)();}
+function beep(f=800,d=0.15){initAudio();const o=audioCtx.createOscillator();const g=audioCtx.createGain();o.frequency.value=f;o.type='sine';g.gain.setValueAtTime(0.2,audioCtx.currentTime);g.gain.exponentialRampToValueAtTime(0.001,audioCtx.currentTime+d);o.connect(g);g.connect(audioCtx.destination);o.start();o.stop(audioCtx.currentTime+d);}
+function endBeep(){beep(600,0.2);setTimeout(()=>beep(600,0.2),200);}
+function updateTimerDisplay(label,sec){document.getElementById('timerLabel').innerText=label;document.getElementById('timerTime').innerText=Math.floor(sec/60).toString().padStart(2,'0')+':'+(sec%60).toString().padStart(2,'0');}
+function runWorkPhase(work,rest,reps){let t=work;beep(1000,0.2);timerInterval=setInterval(()=>{updateTimerDisplay(`Rep ${currentRep} — RUN`,t);if(t<=3&&t>0)beep(1200,0.1);if(t<=0){clearInterval(timerInterval);endBeep();if(currentRep<reps)runRestPhase(work,rest,reps);else updateTimerDisplay('Session Complete',0);}t--;},1000);}
+function runRestPhase(work,rest,reps){let t=rest;beep(500,0.2);timerInterval=setInterval(()=>{updateTimerDisplay(`Rep ${currentRep} — REST`,t);if(t<=0){clearInterval(timerInterval);currentRep++;runWorkPhase(work,rest,reps);}t--;},1000);}
+function startIntervalTimer({reps=6,work=90,rest=90}){initAudio();currentRep=1;runWorkPhase(work,rest,reps);}
+function start400s(){startIntervalTimer({reps:6,work:90,rest:90});}
+
+// ---------------- Initial Render ----------------
+renderCalendar();
+renderLogs();
