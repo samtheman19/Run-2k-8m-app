@@ -1,56 +1,43 @@
-/* Basic resets */
-* { margin: 0; padding: 0; box-sizing: border-box; }
+/* Reset & base */
+* { margin:0; padding:0; box-sizing:border-box; }
 body { font-family: Arial, sans-serif; background: #1a1a2e; color: #fff; }
-
 .app-container { display: flex; min-height: 100vh; }
 
 /* Sidebar */
 .sidebar {
-  width: 200px;
-  background: #16213e;
-  padding: 20px;
-  display: flex;
-  flex-direction: column;
+  width: 200px; background: #16213e; padding: 20px; display: flex; flex-direction: column;
 }
-.sidebar h2 { margin-bottom: 20px; font-size: 20px; }
-.sidebar nav ul { list-style: none; }
-.sidebar nav ul li { margin-bottom: 15px; }
+.sidebar h2 { margin-bottom:20px; font-size:20px; }
+.sidebar nav ul { list-style:none; }
+.sidebar nav ul li { margin-bottom:15px; }
 .sidebar nav ul li a {
-  color: #fff; text-decoration: none; font-weight: bold;
-  display: block; padding: 5px 10px; border-radius: 5px;
+  color:#fff; text-decoration:none; font-weight:bold;
+  display:block; padding:5px 10px; border-radius:5px;
 }
-.sidebar nav ul li a:hover { background: #0f3460; }
+.sidebar nav ul li a:hover { background:#0f3460; }
 
 /* Main content */
-.main-content { flex: 1; padding: 20px; }
+.main-content { flex:1; padding:20px; }
+.section { display:none; }
+.section.active { display:block; }
 
-.section { display: none; }
-.section.active { display: block; }
-
-#calendarContainer {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 15px;
-}
-
+/* Calendar */
+#calendarContainer { display:grid; grid-template-columns:repeat(2,1fr); gap:15px; }
 .day-card {
-  background: #0f3460;
-  padding: 15px;
-  border-radius: 8px;
+  background:#0f3460; padding:15px; border-radius:8px;
 }
+.day-card button { margin-top:10px; padding:8px 12px; }
 
-.day-card button { margin-top: 10px; padding: 8px 12px; }
-
-/* Timer panel */
-#timerPanel { margin-top: 20px; }
-#timerPanel h1 { font-size: 48px; margin: 10px 0; }
-#timerPanel h2 { font-size: 24px; margin-bottom: 10px; }
+/* Timer */
+#timerPanel { margin-top:20px; }
+#timerPanel h1 { font-size:48px; margin:10px 0; }
+#timerPanel h2 { font-size:24px; margin-bottom:10px; }
 #timerPanel button {
-  background: #533483; border: none; padding: 12px 20px; color: #fff;
-  font-size: 16px; border-radius: 5px; cursor: pointer;
+  background:#533483; border:none; padding:12px 20px; color:#fff;
+  font-size:16px; border-radius:5px; cursor:pointer;
 }
-#timerPanel button:hover { background: #7753a3; }
+#timerPanel button:hover { background:#7753a3; }
 
 /* Logs */
-#logList { margin-top: 20px; list-style: none; }
-#logList li { background: #16213e; padding: 10px; border-radius: 5px; margin-bottom: 10px; }
+#logList { margin-top:20px; list-style:none; }
+#logList li { background:#16213e; padding:10px; border-radius:5px; margin-bottom:10px; }
