@@ -1,4 +1,4 @@
-// -------------------- CALENDAR --------------------
+// -------------------- TRAINING PLAN --------------------
 const plan = [
   { day: "Day 1", type: "VO2 Intervals" },
   { day: "Day 2", type: "Easy + Strides" },
@@ -43,7 +43,7 @@ function logSession(i) {
   userData[i].notes = notes;
   adjustPlan(i);
   localStorage.setItem("trainingData", JSON.stringify(userData));
-  alert("Logged!");
+  alert("Session logged!");
 }
 
 function adjustPlan(i) {
@@ -55,7 +55,7 @@ function adjustPlan(i) {
   if (totalSec < targetSec) {
     alert("Nice! We'll make the sessions slightly faster next week!");
   } else {
-    alert("We're keeping the same pace targets next week.");
+    alert("Pace targets will remain the same next week.");
   }
 }
 
@@ -146,52 +146,4 @@ function start400s() {
 function getEveningAdjustedWorkTime(baseSeconds) {
   const hour = new Date().getHours();
   return hour >= 17 ? baseSeconds + 3 : baseSeconds;
-}
-
-// -------------------- INTERVAL LOGIC --------------------
-function loadData() {
-  return JSON.parse(localStorage.getItem("runData")) || { currentWeek: 1, targets: { "400s": 94 }, history: [] };
-}
-
-function saveData(data) {
-  localStorage.setItem("runData", JSON.stringify(data));
-}
-
-function logIntervalResults(sessionType, repCount) {
-  let reps = [];
-  for (let i = 1; i <= repCount; i++) {
-    let time = prompt(`Rep ${i} time (mm:ss)`);
-    reps.push(parseTime(time));
-  }
-  processSession(sessionType, reps);
-}
-
-function parseTime(t) {
-  const [m, s] = t.split(":").map(Number);
-  return m * 60 + s;
-}
-
-function analyseReps(reps) {
-  const avg = reps.reduce((a, b) => a + b) / reps.length;
-  const fade = ((reps[reps.length - 1] - reps[0]) / reps[0]) * 100;
-  let hitRate = reps.filter(r => r <= avg + 2).length / reps.length;
-  return { avg, fade, hitRate };
-}
-
-function calculateAdjustment(analysis) {
-  if (analysis.hitRate >= 0.8 && analysis.fade < 4) return -2;
-  if (analysis.fade > 8) return +2;
-  return 0;
-}
-
-function processSession(sessionType, reps) {
-  const data = loadData();
-  const analysis = analyseReps(reps);
-  const adjustment = calculateAdjustment(analysis);
-  const target = data.targets[sessionType];
-  const newTarget = Math.max(target + adjustment, 90);
-  data.history.push({ week: data.currentWeek, session: sessionType, targetPaceSec: target, reps, avg: analysis.avg, fade: analysis.fade, adjustment });
-  data.targets[sessionType] = newTarget;
-  saveData(data);
-  alert(adjustment < 0 ? `Nice work. Next week pace: ${(newTarget/60).toFixed(2)}` : adjustment > 0 ? `Holding back slightly. Pace adjusted.` : `Pace held for next week.`);
 }
