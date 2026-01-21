@@ -1,0 +1,53 @@
+body {
+  background: #1a1a2e;
+  color: #fff;
+  font-family: Arial, sans-serif;
+  text-align: center;
+  padding: 20px;
+}
+
+h1 {
+  margin-bottom: 20px;
+}
+
+#calendar {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 15px;
+  margin-bottom: 40px;
+}
+
+.day {
+  background: #16213e;
+  padding: 15px;
+  border-radius: 8px;
+}
+
+.checkbox {
+  margin-top: 10px;
+}
+
+button {
+  background: #0f3460;
+  border: none;
+  padding: 10px 15px;
+  color: #fff;
+  border-radius: 5px;
+  margin-top: 10px;
+  cursor: pointer;
+}
+
+button:hover {
+  background: #533483;
+}
+
+#timer {
+  margin-top: 30px;
+}
+#timer h1 {
+  font-size: 48px;
+  margin: 10px 0;
+}
+#timer h2 {
+  font-size: 24px;
+}
