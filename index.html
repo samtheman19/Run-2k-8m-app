@@ -2,24 +2,55 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>2km Sub-8 Training App</title>
+  <title>2km Sub-8 Training</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-  <h1>2km Sub-8 Training Calendar</h1>
+<div class="app-container">
 
-  <!-- Calendar -->
-  <div id="calendar"></div>
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <h2>2km Sub‑8</h2>
+    <nav>
+      <ul>
+        <li><a href="#" onclick="showSection('calendar')">Calendar</a></li>
+        <li><a href="#" onclick="showSection('timer')">Timer</a></li>
+        <li><a href="#" onclick="showSection('logs')">Logs</a></li>
+      </ul>
+    </nav>
+  </aside>
 
-  <!-- Timer -->
-  <div id="timer">
-    <h2 id="timerLabel">Ready</h2>
-    <h1 id="timerTime">00:00</h1>
-    <button onclick="start400s()">Start 400m Intervals</button>
-  </div>
+  <!-- Main content -->
+  <main class="main-content">
 
-  <script src="app.js"></script>
+    <!-- Calendar section -->
+    <section id="calendar" class="section active">
+      <h1>Weekly Calendar</h1>
+      <div id="calendarContainer"></div>
+    </section>
+
+    <!-- Timer section -->
+    <section id="timer" class="section">
+      <h1>Interval Timer</h1>
+      <div id="timerPanel">
+        <h2 id="timerLabel">Ready</h2>
+        <h1 id="timerTime">00:00</h1>
+        <button onclick="start400s()">Start 400m Intervals</button>
+      </div>
+    </section>
+
+    <!-- Logs section -->
+    <section id="logs" class="section">
+      <h1>Recent Logs</h1>
+      <ul id="logList"></ul>
+    </section>
+
+  </main>
+
+</div>
+
+<script src="app.js"></script>
 </body>
 </html>
