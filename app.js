@@ -801,3 +801,262 @@ function getLongRunMinutes(base = 45) {
   if (wk % 4 === 0) return base; // deload
   return base + Math.min(25, wk * 5);
 }
+
+/* 2 km PR – Routine (Treadmill + Outdoor mode)
+   - Mode dropdown: Treadmill / Outdoor
+   - Run instructions switch based on mode
+   - Interval timer ONLY on Intervals day
+   - Strength logging: kg + LWkg + reps + LWreps
+   - Per-set rest countdown starts when set ticked
+   - Mobility timers + tick
+*/
+
+const STORAGE_KEY = "treadmill810_2kmPR_v1";
+const TODAY_KEY = () => new Date().toISOString().slice(0, 10);
+
+// -------------------- Plan (FULL WEEK) --------------------
+const days = [
+  {
+    key: "mon",
+    name: "Mon – Strength A",
+    warmup: ["3 min easy walk or jog", "Leg swings 10 each direction", "Ankle & calf mobility 60 sec"],
+    main: {
+      type: "strength",
+      exercises: [
+        { id: "trap", name: "Trap Bar Deadlift", sets: 4, targetReps: 3, note: "fast, no grind" },
+        { id: "bss", name: "Bulgarian Split Squat", sets: 3, targetReps: 5, note: "each leg" },
+        { id: "box", name: "Box Jumps", sets: 3, targetReps: 3, note: "reset each rep" },
+        { id: "calf", name: "Standing Calf Raises", sets: 3, targetReps: 10, note: "slow down" }
+      ]
+    },
+    mobility: [
+      { id: "couch", name: "Couch stretch", seconds: 60, note: "per side" },
+      { id: "calfStretch", name: "Calf stretch", seconds: 60, note: "per side" },
+      { id: "glute", name: "Glute stretch", seconds: 60, note: "per side" }
+    ]
+  },
+
+  // -------------------- Intervals Day (2 km PR Focus) --------------------
+  {
+    key: "tue",
+    name: "Tue – Intervals (2 km PR Focus)",
+    warmup: ["10 min easy", "3 × 20s strides"],
+    main: {
+      type: "run",
+      title: "Intervals – Speed Focus",
+      showIntervalTimer: true,
+      detailsByMode: {
+        treadmill: [
+          "Incline: 1.0%",
+          "Rounds: 6–8",
+          "Work: 90s @ 15.5–16.0 km/h (target 4:03 → 3:55/km)",
+          "Recovery: 90s @ 10.0–10.5 km/h (easy jog)",
+          "Goal: controlled hard reps, push pace each week"
+        ],
+        outdoor: [
+          "Route: flat loop / track",
+          "Rounds: 6–8",
+          "Work: 90s @ RPE 8–9 (slightly faster than 2 km pace)",
+          "Recovery: 90s easy jog/walk",
+          "Goal: aim consistent splits, finish strong"
+        ]
+      }
+    },
+    mobility: [
+      { id: "calfStretch2", name: "Calf stretch", seconds: 60, note: "per side" },
+      { id: "hipFlex2", name: "Hip flexor stretch", seconds: 60, note: "per side" }
+    ]
+  },
+
+  {
+    key: "wed",
+    name: "Wed – Mobility / Rest",
+    warmup: [],
+    main: { type: "rest", details: ["Recovery day. Keep it easy.", "Optional 10–20 min walk"] },
+    mobility: [
+      { id: "couch2", name: "Couch stretch", seconds: 60, note: "per side" },
+      { id: "calves2", name: "Calves", seconds: 60, note: "per side" },
+      { id: "thoracic", name: "Thoracic rotations", seconds: 60, note: "per side" }
+    ]
+  },
+
+  {
+    key: "thu",
+    name: "Thu – Strength B",
+    warmup: ["3 min easy walk or jog", "Hip openers 60 sec", "Ankle & calf mobility 60 sec"],
+    main: {
+      type: "strength",
+      exercises: [
+        { id: "rdl", name: "Romanian Deadlift", sets: 4, targetReps: 6, note: "controlled" },
+        { id: "split", name: "Reverse Lunge", sets: 3, targetReps: 6, note: "each leg" },
+        { id: "step", name: "Step-ups", sets: 3, targetReps: 8, note: "each leg" },
+        { id: "calf2", name: "Seated Calf Raises", sets: 3, targetReps: 12, note: "slow down" }
+      ]
+    },
+    mobility: [
+      { id: "hipFlex", name: "Hip flexor stretch", seconds: 60, note: "per side" },
+      { id: "ham", name: "Hamstring stretch", seconds: 60, note: "per side" }
+    ]
+  },
+
+  // -------------------- Easy Run with Strides --------------------
+  {
+    key: "fri",
+    name: "Fri – Easy Run / Strides",
+    warmup: ["8–10 min easy", "2 × 15s strides"],
+    main: {
+      type: "run",
+      title: "Easy Run with Strides",
+      showIntervalTimer: false,
+      detailsByMode: {
+        treadmill: [
+          "Incline: 1.0%",
+          "20–30 min easy",
+          "Include 4 × 20s strides at 2 km pace with 40s walk/jog recovery",
+          "Finish feeling fresh"
+        ],
+        outdoor: [
+          "20–30 min easy",
+          "4 × 20s strides at target pace",
+          "Talk-test pace otherwise",
+          "Finish feeling fresh"
+        ]
+      }
+    },
+    mobility: [{ id: "calfStretch3", name: "Calf stretch", seconds: 60, note: "per side" }]
+  },
+
+  // -------------------- Tempo Day --------------------
+  {
+    key: "sat",
+    name: "Sat – Tempo / Steady (Speed Endurance)",
+    warmup: ["10 min easy", "3 × 20s strides"],
+    main: {
+      type: "run",
+      title: "Tempo / Steady",
+      showIntervalTimer: false,
+      detailsByMode: {
+        treadmill: [
+          "Incline: 1.0%",
+          "10 min easy @ 11.0–12.0 km/h",
+          "15–20 min tempo @ 13.5–14.5 km/h",
+          "5 min easy cool down",
+          "Goal: maintain steady effort close to 2 km target pace"
+        ],
+        outdoor: [
+          "10 min easy",
+          "15–20 min steady (RPE 7–8, push 2 km pace)",
+          "5–10 min cool down",
+          "Focus on even cadence and breathing"
+        ]
+      }
+    },
+    mobility: [{ id: "glutes2", name: "Glute stretch", seconds: 60, note: "per side" }]
+  },
+
+  // -------------------- Long Run Day --------------------
+  {
+    key: "sun",
+    name: "Sun – Long Run",
+    warmup: ["5–10 min easy build"],
+    main: {
+      type: "run",
+      title: "Long Run",
+      showIntervalTimer: false,
+      detailsByMode: {
+        treadmill: [
+          "Incline: 1.0%",
+          "35–50 min easy (build by +5 min every 1–2 weeks)",
+          "Keep it conversational (RPE 4–5/10)"
+        ],
+        outdoor: [
+          "35–50 min easy (build by +5 min every 1–2 weeks)",
+          "Conversational pace (RPE 4–5/10)",
+          "Prefer flatter route; take water if needed"
+        ]
+      }
+    },
+    mobility: [{ id: "fullbody", name: "Full body stretch", seconds: 180, note: "easy" }]
+  }
+];
+
+// -------------------- State --------------------
+const defaultState = {
+  dayKey: "mon",
+  mode: "treadmill",
+  restSeconds: 90,
+  session: { running: false, startedAt: null, elapsedMs: 0, lastSaved: null },
+  logs: {},
+  mobility: {}
+};
+
+let state = loadState();
+
+// -------------------- Helpers --------------------
+function loadState() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return structuredClone(defaultState);
+    const parsed = JSON.parse(raw);
+    return { ...structuredClone(defaultState), ...parsed };
+  } catch {
+    return structuredClone(defaultState);
+  }
+}
+function saveState() { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
+function dayByKey(key) { return days.find(d => d.key === key) || days[0]; }
+
+function formatHMS(ms) {
+  const total = Math.max(0, Math.floor(ms / 1000));
+  const h = String(Math.floor(total / 3600)).padStart(2, "0");
+  const m = String(Math.floor((total % 3600) / 60)).padStart(2, "0");
+  const s = String(total % 60).padStart(2, "0");
+  return `${h}:${m}:${s}`;
+}
+function formatMS(ms) {
+  const total = Math.max(0, Math.floor(ms / 1000));
+  const m = String(Math.floor(total / 60)).padStart(2, "0");
+  const s = String(total % 60).padStart(2, "0");
+  return `${m}:${s}`;
+}
+
+function currentWeekNumber() {
+  const base = new Date("2026-01-01T00:00:00Z").getTime();
+  const now = Date.now();
+  const diffDays = Math.floor((now - base) / (24 * 3600 * 1000));
+  return Math.max(1, Math.floor(diffDays / 7) + 1);
+}
+function getWeekKey() { return String(currentWeekNumber()); }
+
+function ensurePath(obj, pathArr, fallback) {
+  let ref = obj;
+  for (let i = 0; i < pathArr.length; i++) {
+    const k = pathArr[i];
+    if (ref[k] == null) ref[k] = (i === pathArr.length - 1) ? fallback : {};
+    ref = ref[k];
+  }
+  return ref;
+}
+
+// -------------------- Remainder of code --------------------
+// The rest of your original code for session timers, strength logging, mobility, rendering, 
+// handlers, live tick updates, interval timer setup, beep, escapeHtml, escapeAttr remains unchanged.
+// -------------------- Interval & Tempo Progression Updated --------------------
+function getIntervalSuggestion() {
+  const wk = Number(getWeekKey());
+  const baseSpeed = 15.5; // km/h first week of PR focus
+  const speedBump = 0.1 * wk; // increase speed weekly
+  const reps = Math.min(8, 6 + (wk % 4));
+  return { reps, speedBump, targetSpeed: baseSpeed + speedBump };
+}
+
+function getTempoMinutes(base = 15) {
+  const wk = Number(getWeekKey());
+  return Math.min(25, base + Math.floor(wk / 2) * 2); // gradually build tempo duration
+}
+
+function getLongRunMinutes(base = 45) {
+  const wk = Number(getWeekKey());
+  if (wk % 4 === 0) return base; // deload
+  return base + Math.min(25, wk * 5);
+}
