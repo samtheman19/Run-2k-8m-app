@@ -1,11 +1,17 @@
-/* 2 km PR Training – Strength + 2km run progression with full treadmill-810 features */
+/* 2 km PR Training – Strength + Run Progressive 2km
+   - Mode dropdown: Treadmill / Outdoor
+   - Interval timer only on Intervals day
+   - Strength logging: kg + LWkg + reps + LWreps
+   - Per-set rest countdown starts when set ticked
+   - Mobility timers + tick
+*/
 
-const STORAGE_KEY = "run2k_v3";
+const STORAGE_KEY = "treadmill810_v9";
 const TODAY_KEY = () => new Date().toISOString().slice(0, 10);
 
-// -------------------- Run progression --------------------
-const base2kSec = 516; // 8:36 = 516s
-const target2kSec = 480; // 8:00 = 480s
+// -------------------- 2 km progression --------------------
+const base2kSec = 516; // 8:36 total = 4:18/km
+const target2kSec = 480; // 8:00 total = 4:00/km
 
 function currentWeekNumber() {
   const base = new Date("2026-01-01T00:00:00Z").getTime();
@@ -14,29 +20,34 @@ function currentWeekNumber() {
   return Math.max(1, Math.floor(diffDays / 7) + 1);
 }
 
-function intervalSpeedKmH() {
+function getIntervalSpeedKmH() {
   const wk = currentWeekNumber();
   let pace = base2kSec * Math.pow(0.985, wk - 1);
   pace = Math.max(target2kSec, pace);
-  return 7200 / pace;
+  return 7200 / pace; // km/h for 2 km in 7200s
 }
 
-function tempoSpeedKmH() {
+function getTempoSpeedKmH() {
   const wk = currentWeekNumber();
-  return 10.8 + 0.2 * Math.floor((wk - 1) / 2);
+  let baseTempo = 10.8;
+  let increment = 0.2 * Math.floor((wk - 1) / 2);
+  return baseTempo + increment;
 }
 
-function longRunSpeedKmH() {
+function getLongRunSpeedKmH() {
   const wk = currentWeekNumber();
-  return 10.5 + 0.2 * Math.floor((wk - 1) / 2);
+  let baseLong = 10.5;
+  let increment = 0.2 * Math.floor((wk - 1) / 2);
+  return baseLong + increment;
 }
 
-// -------------------- Weekly Plan --------------------
+// -------------------- Plan (FULL WEEK) --------------------
 const days = [
+  // Monday – Upper Strength
   {
     key: "mon",
     name: "Mon – Upper Strength",
-    warmup: ["5 min bike/row", "Shoulder mobility 60s", "Arm circles 10 each way"],
+    warmup: ["5 min easy bike/row", "Shoulder mobility 60s", "Arm circles 10 each way"],
     main: {
       type: "strength",
       exercises: [
@@ -51,9 +62,11 @@ const days = [
       { id: "lats", name: "Lat stretch", seconds: 60 }
     ]
   },
+
+  // Tuesday – Intervals (2 km focus)
   {
     key: "tue",
-    name: "Tue – 2km Interval Run",
+    name: "Tue – Intervals",
     warmup: ["10 min easy", "3 × 20s strides"],
     main: {
       type: "run",
@@ -61,19 +74,21 @@ const days = [
       showIntervalTimer: true,
       detailsByMode: {
         treadmill: [
-          `6 × 400m @ ${intervalSpeedKmH().toFixed(1)} km/h`,
+          `6 × 400m @ ${getIntervalSpeedKmH().toFixed(1)} km/h`,
           "Recovery: 90s walk/jog",
           "Goal: controlled fast pace"
         ],
         outdoor: [
-          "6 × 400m at target 2km pace (~8:00)",
+          "6 × 400m at target pace (~8:00 2km)",
           "Recovery: 90s easy jog",
           "Goal: controlled fast reps"
         ]
       }
     },
-    mobility: [{ id: "calf2", name: "Calf stretch", seconds: 60 }]
+    mobility: [{ id: "calfStretch2", name: "Calf stretch", seconds: 60 }]
   },
+
+  // Wednesday – Lower Strength
   {
     key: "wed",
     name: "Wed – Lower Strength",
@@ -92,6 +107,8 @@ const days = [
       { id: "ham", name: "Hamstring stretch", seconds: 60 }
     ]
   },
+
+  // Thursday – Tempo Run
   {
     key: "thu",
     name: "Thu – Tempo Run",
@@ -102,7 +119,7 @@ const days = [
       showIntervalTimer: false,
       detailsByMode: {
         treadmill: [
-          `10–15 min steady @ ${tempoSpeedKmH().toFixed(1)} km/h`,
+          `10–15 min steady @ ${getTempoSpeedKmH().toFixed(1)} km/h`,
           "5 min easy cool down"
         ],
         outdoor: [
@@ -113,44 +130,45 @@ const days = [
     },
     mobility: [{ id: "glutes", name: "Glute stretch", seconds: 60 }]
   },
+
+  // Friday – Easy Run
   {
     key: "fri",
-    name: "Fri – Upper Strength / Optional Run",
-    warmup: ["5 min bike/row", "Mobility 5 min"],
+    name: "Fri – Easy Run",
+    warmup: ["8–10 min easy", "2 × 15s relaxed strides (optional)"],
     main: {
-      type: "strength",
-      exercises: [
-        { id: "bench2", name: "Incline Bench Press", sets: 3, targetReps: 8 },
-        { id: "row2", name: "Seated Row", sets: 3, targetReps: 8 },
-        { id: "dip", name: "Dips", sets: 3, targetReps: 10 }
-      ]
+      type: "run",
+      title: "Easy Run",
+      showIntervalTimer: false,
+      detailsByMode: {
+        treadmill: [`15–25 min easy @ ${getLongRunSpeedKmH().toFixed(1)} km/h`],
+        outdoor: ["15–25 min easy pace", "Keep conversational, optional hills"]
+      }
     },
-    mobility: [
-      { id: "pec2", name: "Pec stretch", seconds: 60 },
-      { id: "hip2", name: "Hip flexor", seconds: 60 }
-    ]
+    mobility: [{ id: "calfStretch3", name: "Calf stretch", seconds: 60 }]
   },
+
+  // Saturday – Long / 2 km focus
   {
     key: "sat",
-    name: "Sat – Long Run + 2km Finisher",
+    name: "Sat – Long / 2 km Focus",
     warmup: ["10 min easy", "3 × 20s strides"],
     main: {
       type: "run",
-      title: "Long Run + 2km Finisher",
+      title: "Long Run + Finisher",
       showIntervalTimer: false,
       detailsByMode: {
         treadmill: [
-          `20–25 min steady @ ${longRunSpeedKmH().toFixed(1)} km/h`,
-          `Finish last 400m @ ${intervalSpeedKmH().toFixed(1)} km/h`
+          `20–25 min steady @ ${getLongRunSpeedKmH().toFixed(1)} km/h`,
+          `Finish last 400m @ ${getIntervalSpeedKmH().toFixed(1)} km/h`
         ],
-        outdoor: [
-          "20–25 min steady run",
-          "Finish last 400m at target 2km pace"
-        ]
+        outdoor: ["20–25 min steady run", "Finish last 400m at target 2km pace"]
       }
     },
     mobility: [{ id: "fullbody", name: "Full body stretch", seconds: 180 }]
   },
+
+  // Sunday – Rest / Mobility
   {
     key: "sun",
     name: "Sun – Rest / Mobility",
@@ -164,7 +182,7 @@ const days = [
   }
 ];
 
-// -------------------- State / Load / Save --------------------
+// -------------------- STATE --------------------
 const defaultState = {
   dayKey: "mon",
   mode: "treadmill",
@@ -175,44 +193,66 @@ const defaultState = {
 };
 
 let state = loadState();
-
 function loadState() {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
+  try { 
+    const raw = localStorage.getItem(STORAGE_KEY); 
     if (!raw) return structuredClone(defaultState);
-    return { ...structuredClone(defaultState), ...JSON.parse(raw) };
+    const parsed = JSON.parse(raw);
+    return { ...structuredClone(defaultState), ...parsed };
   } catch { return structuredClone(defaultState); }
 }
+function saveState() { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
+function dayByKey(key) { return days.find(d => d.key === key) || days[0]; }
+function getWeekKey() { return String(currentWeekNumber()); }
 
-function saveState() {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+// -------------------- SESSION TIMER, STRENGTH LOG, MOBILITY, RENDER, HANDLERS, TICK, INTERVAL TIMER, UTILS --------------------
+// Copy your previously fully working functions here from your single-file app.js
+// sessionStart, sessionPause, sessionEndSave, getLogRef, setTodayValue, setDoneAndStartRest
+// getMob, mobStart, mobToggleDone, mobRemainingMs, renderSession, renderDay, renderExercise, renderRestSettings
+// renderMobItem, renderIntervalTimer, render, attachHandlers, startTick, setupIntervalTimer, beep, escapeHtml, escapeAttr
+
+// -------------------- PROGRESSION LOGIC --------------------
+function getStrengthSuggestion(dayKey, ex) {
+  const wk = Number(getWeekKey());
+  const lastWeek = String(Math.max(1, wk - 1));
+  const logs = (((state.logs || {})[lastWeek] || {})[dayKey] || {})[ex.id];
+  if (!logs) return null;
+
+  let allHit = true, avgKg = 0, sets = 0;
+  for (let i = 1; i <= ex.sets; i++) {
+    const row = logs[String(i)];
+    if (!row) return null;
+    const reps = Number(row.reps || 0);
+    const kg = Number(row.kg || 0);
+    if (reps < ex.targetReps) allHit = false;
+    avgKg += kg;
+    sets++;
+  }
+  if (!allHit || sets === 0) return null;
+  avgKg /= sets;
+  let jump = 2.5;
+  if (/split|lunge|step/i.test(ex.name)) jump = 1;
+  if (/calf/i.test(ex.name)) jump = 2.5;
+  return Math.round((avgKg + jump) * 2) / 2;
 }
 
-// -------------------- DOM Elements --------------------
-const daySelect = document.getElementById("daySelect");
-const modeSelect = document.getElementById("modeSelect");
-const resetDayBtn = document.getElementById("resetDayBtn");
-const resetWeekBtn = document.getElementById("resetWeekBtn");
-const sessionDateEl = document.getElementById("sessionDate");
-const sessionTimeEl = document.getElementById("sessionTime");
-const sessionStartBtn = document.getElementById("sessionStartBtn");
-const sessionPauseBtn = document.getElementById("sessionPauseBtn");
-const sessionEndBtn = document.getElementById("sessionEndBtn");
-const dayTitleEl = document.getElementById("dayTitle");
-const warmupList = document.getElementById("warmupList");
-const mainBlock = document.getElementById("mainBlock");
-const mobilityList = document.getElementById("mobilityList");
+function getIntervalSuggestion() {
+  const wk = Number(getWeekKey());
+  const reps = Math.min(8, 6 + (wk % 4));
+  const speedBump = 0;
+  return { reps, speedBump };
+}
+
+function getTempoMinutes(base = 12) {
+  const wk = Number(getWeekKey());
+  return Math.min(20, base + Math.floor(wk / 2) * 2);
+}
+
+function getLongRunMinutes(base = 45) {
+  const wk = Number(getWeekKey());
+  if (wk % 4 === 0) return base;
+  return base + Math.min(25, wk * 5);
+}
 
 // -------------------- INIT --------------------
-function init() {
-  daySelect.innerHTML = days.map(d => `<option value="${d.key}">${d.name}</option>`).join("");
-  daySelect.value = state.dayKey;
-  modeSelect.value = state.mode || "treadmill";
-  render();
-  startTick();
-}
 init();
-
-// -------------------- Everything else --------------------
-// Copy all treadmill-810 JS here (session timer, strength/mobility logging, rest countdowns, interval timer, renderDay, renderExercise, renderMobItem, attachHandlers, startTick, beep, escapeHtml, escapeAttr, etc.)  
-// This ensures full functionality while using the new `days` plan above.
